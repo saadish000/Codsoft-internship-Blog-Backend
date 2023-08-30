@@ -21,9 +21,70 @@ exports.createBlog = async (req, res) => {
   }
 };
 
-exports.getBlog = async (req, res) => {};
+exports.getBlog = async (req, res) => {
+  try {
+    const blogId = req.params.body;
+    const blog = await Blog.findById(blogId);
+    if (!blog) {
+      res.status(400).json({
+        statusCode: 404,
+        success: false,
+        message: "Can't get the Blog",
+        payload,
+      });
+    }
+    res.status(200).json({
+      statusCode: 200,
+      success: true,
+      message: "Blog Retrieved",
+      payload: { blog },
+    });
+  } catch (error) {
+    res.status(400).json({
+      statusCode: 404,
+      success: false,
+      message: "Some error while retrieving the Blog",
+      payload: { error },
+    });
+  }
+};
 
-exports.getAllBlogs = async (req, res) => {};
-exports.deleteBlog = async (req, res) => {};
+exports.getAllBlogs = async (req, res) => {
+  try {
+    const blogs = await Blog.find();
+    res.status(200).json({
+      statusCode: 200,
+      success: true,
+      message: "All Blogs Retrieved",
+      payload: { blogs },
+    });
+  } catch (error) {
+    res.status(402).json({
+      statusCode: 402,
+      success: false,
+      message: "Some error while retrieving All Blogs",
+      payload: { error },
+    });
+  }
+};
+
+exports.deleteBlog = async (req, res) => {
+  try {
+    const blogId = req.params.id;
+    await Blog.findByIdAndDelete(blogId);
+    res.status(200).json({
+      statusCode: 200,
+      success: true,
+      message: "Blog Deleted Successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      statusCode: 404,
+      success: false,
+      message: "Some error while Deleting the Blog",
+      payload: { error },
+    });
+  }
+};
 
 exports.updateBlog = async (req, res) => {};
