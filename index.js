@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import userRoutes from "./routes/userRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 const app = express();
+import { PORT, MONGO_URL } from "./config/config.js";
 
 app.use(express.json());
 app.use(cors());
@@ -11,12 +12,8 @@ app.use(cors());
 app.use("/auth", userRoutes);
 app.use("/blog", blogRoutes);
 
-const PORT = 4000;
-
 mongoose
-  .connect(
-    "mongodb+srv://saadisheikh000:saad1234@cluster0.onnqw0t.mongodb.net/simplecrud?retryWrites=true&w=majority"
-  )
+  .connect(MONGO_URL)
   .then(console.log("The Database is Connected"))
   .catch((error) => {
     console.log(error);

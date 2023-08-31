@@ -1,7 +1,7 @@
 import express from "express";
 import { Blog } from "../models/blogModel.js";
 
-exports.createBlog = async (req, res) => {
+export const createBlog = async (req, res) => {
   try {
     const { title, description, user, createdAt } = req.body;
     const blog = await Blog.create(req.body);
@@ -21,7 +21,7 @@ exports.createBlog = async (req, res) => {
   }
 };
 
-exports.getBlog = async (req, res) => {
+export const getBlog = async (req, res) => {
   try {
     const blogId = req.params.body;
     const blog = await Blog.findById(blogId);
@@ -49,7 +49,7 @@ exports.getBlog = async (req, res) => {
   }
 };
 
-exports.getAllBlogs = async (req, res) => {
+export const getAllBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find();
     res.status(200).json({
@@ -68,7 +68,7 @@ exports.getAllBlogs = async (req, res) => {
   }
 };
 
-exports.deleteBlog = async (req, res) => {
+export const deleteBlog = async (req, res) => {
   try {
     const blogId = req.params.id;
     await Blog.findByIdAndDelete(blogId);
@@ -87,4 +87,28 @@ exports.deleteBlog = async (req, res) => {
   }
 };
 
-exports.updateBlog = async (req, res) => {};
+export const updateBlog = async (req, res) => {
+  try {
+    const blogId = req.params.id;
+    const { title, description, user } = req.body;
+
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      blogId,
+      { title, description, user },
+      { new: true }
+    );
+    res.status(200).json({
+      statusCode: 200,
+      success: true,
+      message: "Blog has been updated Successfully",
+      payload: { updatedBlog },
+    });
+  } catch (error) {
+    res.status(400).json({
+      statusCode: 400,
+      success: false,
+      message: "Blog can't be updated",
+      payload: { error },
+    });
+  }
+};
