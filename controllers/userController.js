@@ -5,45 +5,90 @@ import { saltRounds } from "../config/config.js";
 import { catchAsyncError } from "../middleware/asyncErrorHandler.js";
 import CustomError from "../Utils/customError.js";
 
-export const registerUser = catchAsyncError(async (req, res, next) => {
-  const { username, email, password } = req.body;
-  const checkUser = await User.findOne({ email });
-  if (checkUser) {
-    return next(new CustomError("User Already Exist", 402));
+export const register = catchAsyncError(async (req, res, next) => {
+  const { name, email, password } = req.body;
+  let user = await User.findOne({ email });
+  if (user) {
+    return res.status(409).json({
+      statusCode: 409,
+      status: false,
+      message: "User already exists!",
+      payload: { user },
+    });
   }
   const hashedPassword = await bcrypt.hash(password, saltRounds);
-  const user = User.create({
+
+  user = await User.create({
+    name,
     email,
-    username,
     password: hashedPassword,
   });
-  res.status(200).json({
+
+  const tokenPayload = { id: user._id, email: user.email };
+  const token = jwt.sign(tokenPayload, process.env.Secret_key, {
+    expiresIn: process.env.JWT_EXPIRATION_TIME,
+  });
+
+  return res.status(200).json({
     statusCode: "200",
-    status: success,
+    status: true,
     message: "User created",
-    payload: { user },
+    payload: {
+      token: {
+        accessToken: token,
+        expiresIn: parseInt(process.env.JWT_EXPIRATION_TIME),
+      },
+      user: {
+        name: user.name,
+        email: user.email,
+        password: user.password,
+      },
+    },
   });
 });
 
-export const loginUser = catchAsyncError(async (req, res, next) => {
+export const login = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
-  const checkEmail = await User.findOne({ email });
-  if (!checkEmail) {
-    return res.status(402).json({ message: "User Not Found" });
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({
+      statusCode: 404,
+      status: false,
+      message: "User does not exist!",
+    });
   }
 
-  const passwordMatch = await bcrypt.compare(user.password, password);
-  if (!passwordMatch) {
-    return next(new CustomError("Password not matched", 400));
+  const isMatch = await bcrypt.compare(user.password, password);
+  if (!isMatch) {
+    console.log("Passwords are not matching!");
+    return res.status(401).json({
+      statusCode: 401,
+      status: 401,
+      message: "Incorrect password",
+    });
   }
-  const token = jwt.sign({ user: user._id }, SecretKey, {
-    expiresIn: "1h",
-  });
+  const tokenPayload = jwt.sign(
+    { user: user._id, email: user.email },
+    process.env.Secret_key,
+    {
+      expiresIn: parseInt(process.env.JWT_EXPIRATION_TIME),
+    }
+  );
 
   res.status(200).json({
     statusCode: 200,
     status: success,
     message: "User Logged In Successfully",
-    payload: { token },
+    payload: {
+      token: {
+        accessToken: token,
+        expiresIn: parseInt(process.env.JWT_EXPIRATION_TIME),
+      },
+      user: {
+        name: user.name,
+        email: user.email,
+        password: user.password,
+      },
+    },
   });
 });
